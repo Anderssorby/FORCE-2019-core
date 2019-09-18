@@ -6,7 +6,7 @@ from pathlib import Path
 
 def read_data():
     path = Path("data/Finalized")
-    
+
     for directory in path.glob("*"):
         for file in directory.glob("*.las"):
             print(f"Reading {file}")
@@ -16,7 +16,14 @@ def read_data():
 
 
 def read_las_file(file):
-    return lasio.read(file)
+    try:
+        las = lasio.read(file)
+    except ValueError as e:
+        print(e)
+
+    # breakpoint()
+
+    return las
 
 
 if __name__== "__main__":
