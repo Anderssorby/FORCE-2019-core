@@ -1,2 +1,8 @@
 lasio
 opencv-python
+
+# Normal
+numpy
+pandas
+matplotlib
+sklearn
