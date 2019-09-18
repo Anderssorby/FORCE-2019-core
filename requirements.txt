@@ -1,0 +1,2 @@
+lasio
+opencv-python
