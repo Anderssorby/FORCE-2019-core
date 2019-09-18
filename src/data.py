@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import lasio
 from pathlib import Path
 import matplotlib
 matplotlib.use('PS')
@@ -31,28 +30,41 @@ def read_data():
     return dfs
 
 
-def read_las_file(file):
-    try:
-        las = lasio.read(file)
-    except ValueError as e:
-        las = None
-        print(e)
-
-    # breakpoint()
-
-    return las
-
-def process_file(las):
+def process_data(df):
     lithology_types = ["Sandstone", "Shale", "Mudstone", "Claystone", "Limestone"]
 
-    length = len(las["DEPTH"])
-    x_values = np.zeros((length, len(lithology_types)))
-    for row in range(length):
-        for i in range(1, 4):
-            for j in range(1, 3):
-                l_type = las[f"LITHOLOGY{i}:{j}"]
-                ind = lithology_types.indexof(l_type)
-                x_values[row, 0] = ind
+    grain_size_type = ["clay", "silt", "vf", "vf/f", "f", "f/m", "m", "m/c", "c",
+            "c/vc", "vc", "vc/granule", "granule", "granule/pebble", "pebble"]
+    gstl = len(grain_size_type)
+    grain_size_value = [i/gstl for i, _ in enumerate(grain_size_type)]
+    # length = len(dframe["DEPTH"])
+    # x_values = np.zeros((length, len(lithology_types)))
+    top_name = "Grain_size_Top.-"
+    base_name = "Grain_size_Base.-"
+    top = None
+    base = None
+    
+    change_points = []
+    # fix grain_size data
+    for i, row in df.iterrows():
+
+        if row[top_name] != top:
+            # top changed
+            index = grain_size_type.index()
+            value = grain_size_value[index]
+            change_points.append((i, value))
+            print(f"Top changed to:{row[top_name]} value: {value}")
+            top = row[top_name]
+            base = row[base_name]
+
+    for i in range(1, len(change_points)):
+        last_point, last_value = change_points[i-1]
+        point, value = change_points[i]
+#        for i in range(1, 4):
+#            for j in range(1, 3):
+#                l_type = dframe[f"LITHOLOGY{i}:{j}"]
+#                ind = lithology_types.indexof(l_type)
+#                x_values[row, 0] = ind
 
 def string_to_float(a):
     return np.array([float(d) for d in a])
@@ -73,6 +85,7 @@ def plot_well(dframe):
     plt.savefig("figure.png")
     plt.close()
 
-if __name__== "__main__":
-    files = read_data()
+
+if __name__ == "__main__":
+    data = read_data()
 
