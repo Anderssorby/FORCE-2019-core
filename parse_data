@@ -1,0 +1,33 @@
+#!/usr/bin/sh
+
+# assuming the zip file is under data/ directory.
+cd data
+
+for f in *\ *; do mv "$f" "${f// /_}"; done
+unzip *.zip
+if [ ! -f data/$zipfile ]; then
+    echo "Could not find zip file. You sure it exists?"
+    exit 1
+else
+    echo "Unzipping..."
+    unzip data/$zipfile
+fi
+
+# replace all with underscores.
+# cd data
+for f in *\ *; do mv "$f" "${f// /_}"; done
+mv RealRocks_RealPore_RealLogs_Public_Geoprovider_sponsored/* .
+for f in *.zip; do unzip $f; done
+mkdir logimages
+find . -maxdepth 1 -name '6*' -exec mv {} logimages \;
+# let's replace underscores again.
+for f in *\ *; do mv "$f" "${f// /_}"; done
+
+cat << EOF
+Done!
+
+See the following:
+    data/logimages                                                      logimages
+    data/Finalized                                                      las files
+    RealPore_Por_Perm_Lithology_data_1240_Wells_Norway_public.xlsx      porosity and permeability
+EOF
