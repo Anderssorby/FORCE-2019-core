@@ -37,29 +37,47 @@ def process_data(df):
             "c/vc", "vc", "vc/granule", "granule", "granule/pebble", "pebble"]
     gstl = len(grain_size_type)
     grain_size_value = [i/gstl for i, _ in enumerate(grain_size_type)]
+    print(grain_size_value)
     # length = len(dframe["DEPTH"])
     # x_values = np.zeros((length, len(lithology_types)))
     top_name = "Grain_size_Top.-"
     base_name = "Grain_size_Base.-"
     top = None
     base = None
-    
+
     change_points = []
     # fix grain_size data
     for i, row in df.iterrows():
-
-        if row[top_name] != top:
+        current_top = row[top_name]
+        if current_top != top:
             # top changed
-            index = grain_size_type.index()
-            value = grain_size_value[index]
+            if current_top not in grain_size_type:
+                print("empty value")
+                value = 0
+            else:
+                index = grain_size_type.index(current_top)
+                value = grain_size_value[index]
+
             change_points.append((i, value))
+
             print(f"Top changed to:{row[top_name]} value: {value}")
-            top = row[top_name]
+
+            top = current_top
             base = row[base_name]
+
+    df["grain_size"] = np.nan
 
     for i in range(1, len(change_points)):
         last_point, last_value = change_points[i-1]
         point, value = change_points[i]
+
+        dif = (value-last_value)/(point-last_point)
+        for row in range(last_point, point):
+            df["grain_size"][row] = last_value + dif*(row-last_point)
+
+
+    return df
+
 #        for i in range(1, 4):
 #            for j in range(1, 3):
 #                l_type = dframe[f"LITHOLOGY{i}:{j}"]
