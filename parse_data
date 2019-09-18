@@ -5,13 +5,6 @@ cd data
 
 for f in *\ *; do mv "$f" "${f// /_}"; done
 unzip *.zip
-if [ ! -f data/$zipfile ]; then
-    echo "Could not find zip file. You sure it exists?"
-    exit 1
-else
-    echo "Unzipping..."
-    unzip data/$zipfile
-fi
 
 # replace all with underscores.
 # cd data
