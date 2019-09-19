@@ -1,4 +1,6 @@
 import pandas as pd
+import pathlib
+import re
 import numpy as np
 from pathlib import Path
 import matplotlib
@@ -110,6 +112,34 @@ def plot_well(dframe, key="GR.API"):
 
     plt.savefig(f"{key}.png")
     plt.close()
+
+
+def find_available_core_images():
+    """Get a pd.DataFrame with info about each available core image samlpe.
+
+    Returns:
+        a pd.DataFrame with the following columns:
+        - license: str, the license number of the well
+        - well_no: str, the well number. License and well number uniquely identifies
+            the well.
+        - top: float; the top of the core sample
+        - base: float; the base of the core sample
+        - path: float; the path to the core sample image
+    """
+    data = []
+    for f in pathlib.Path("data/logimages/").glob("**/*.jpg"):
+        image_name = f.name
+        m = re.match(
+            r"(\d+)_(\d+_\d+)_(?:S_)?(\d+(?:[,.]\d+)?)_(\d+(?:[,.]\d+)?)\.jpg",
+            image_name,
+        )
+        if m is None:
+            print(f"Didnt parse {image_name}")
+            continue
+        license, well_no, top, base = m.groups()
+        top, base = float(top.replace(",", ".")), float(base.replace(",", "."))
+        data.append([license, well_no, top, base, image_name])
+    return pd.DataFrame(data, columns=["license", "well_name", "top", "base", "path"])
 
 
 if __name__ == "__main__":
