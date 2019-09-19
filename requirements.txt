@@ -1,4 +1,5 @@
 lasio
+seaborn
 opencv-python
 xlrd
 
