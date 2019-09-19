@@ -1,8 +1,10 @@
 lasio
 opencv-python
+xlrd
 
 # Normal
 numpy
 pandas
 matplotlib
 sklearn
+pandas
