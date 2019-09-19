@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def filter_dataframe_by_keeping_values(df, column_name, values, verbose=True):
@@ -30,3 +30,8 @@ def digitize(series, n):
 def categorical_as_one_hot(series):
     """Convert a column `col` with categorical values to one-hot vectors."""
     return pd.get_dummies(pd.Categorical(series)).values
+
+def closest_value(series, num):
+    """Return index of the entry that is closest to `num`."""
+    idx = series.sub(num).abs().idxmin()
+    return idx

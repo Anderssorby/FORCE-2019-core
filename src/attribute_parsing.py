@@ -1,6 +1,8 @@
-import pandas as pd
 import pathlib
 from collections import defaultdict
+
+import pandas as pd
+
 from src.pandas_tricks import closest_value
 
 
@@ -58,6 +60,10 @@ def get_gamma_attribute(df, name="GR"):
 
     The method can probably be made faster, but it works. :-)
     """
+    if 'GR' in df.columns:
+        # hack; already done!
+        return df['GR']
+
     p = pathlib.Path("data/Finalized")
     gamma_rays = pd.Series(index=df.index.values, name=name)
     for (well_name, depth), g in df.groupby(["Well Name", "Measured Depth"]):
@@ -98,8 +104,6 @@ def get_permeability_attribute(df, name="permeability"):
     permeability = df[priority[0]]
     for col in priority[1:]:
         mask = permeability.isnull()
-        print(mask.mean())
-        print(df.loc[mask, col].isnull().all())
         permeability.loc[mask] = df.loc[mask, col]
     return pd.Series(permeability, name=name).astype(float)
 
