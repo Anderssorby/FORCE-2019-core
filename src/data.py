@@ -4,6 +4,7 @@ import re
 import numpy as np
 from pathlib import Path
 import matplotlib
+from tqdm import tqdm
 
 matplotlib.use("PS")
 import matplotlib.pyplot as plt
@@ -17,19 +18,21 @@ def read_data():
     path = Path("data/Finalized")
 
     files = []
+    names = []
 
     for directory in path.glob("*"):
         for file in directory.glob("*.txt"):
             print(f"Reading {file}")
             df = pd.read_csv(file, sep="\t")
             files.append(df)
+            names.append(file.name)
 
         # for file in directory.glob("*.las"):
         # print(f"Reading {file}")
         # las_file = read_las_file(str(file))
         # files.append(las_file)
 
-    dfs = pd.concat(files, axis=0, join="outer")
+    dfs = pd.concat(files, axis=0, join="outer", ignore_index=False, names=names)
     return dfs
 
 
@@ -66,27 +69,27 @@ def process_data(df):
 
     change_points = []
     # fix grain_size data
-    for i, row in df.iterrows():
+    for i, row in tqdm(df.iterrows()):
         current_top = row[top_name]
         if current_top != top:
             # top changed
             if current_top not in grain_size_type:
-                print("empty value")
-                value = 0
+                # print("empty value")
+                value = np.nan
             else:
                 index = grain_size_type.index(current_top)
                 value = grain_size_value[index]
 
             change_points.append((i, value))
 
-            print(f"Top changed to:{row[top_name]} value: {value}")
+            # print(f"Top changed to:{row[top_name]} value: {value}")
 
             top = current_top
             base = row[base_name]
 
     df["grain_size"] = np.nan
 
-    for i in range(1, len(change_points)):
+    for i in tqdm(range(1, len(change_points))):
         last_point, last_value = change_points[i - 1]
         point, value = change_points[i]
 
@@ -99,10 +102,15 @@ def string_to_float(a):
     return np.array([float(d) for d in a])
 
 
-def plot_well(dframe, key="GR.API"):
-    x = dframe["Depth.m"]
-    # y = np.array([float(d[:-1]) for d in las["GR"]])
-    y = dframe[key]
+def plot_well(df, key="GR.API"):
+    x = df["Depth.m"]
+
+    if isinstance(df[key][0], str):
+        y = np.array([float(d[:-1]) for d in df[key]])
+    else:
+        y = df[key]
+
+    df = df[df[key] == np.nan]
 
     plt.figure(1)
     plt.plot(x, y)
@@ -142,5 +150,18 @@ def find_available_core_images():
     return pd.DataFrame(data, columns=["license", "well_name", "top", "base", "path"])
 
 
-if __name__ == "__main__":
+def get_data():
     data = read_data()
+    process_data(data)
+    return data
+
+
+def plot_data(data):
+    plot_well(data, "GR.API")
+    plot_well(data, "grain_size")
+
+
+if __name__ == "__main__":
+    data = get_data()
+    plot_data(data)
+
