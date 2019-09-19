@@ -1,5 +1,7 @@
 import pandas as pd
+import pathlib
 from collections import defaultdict
+from src.pandas_tricks import closest_value
 
 
 def get_grain_size_attribute(df, name="grain_size"):
@@ -30,15 +32,58 @@ def get_grain_size_attribute(df, name="grain_size"):
 
 
 def get_sorting_attribute(df, name="sorting"):
-    return pd.Series(df["sorting"], name=name)
+    """Extract sorting attribute from DataFrame.
+
+    We also do some renamings in the DataFrame
+    """
+    series = pd.Series(df["sorting"], name=name)
+    replacements = {
+        "sorted well sorted": "well sorted",
+        "sorted fair sorted": "well sorted",
+        "sorted moderate": "sorted",
+        "medium sorted": "sorted",
+        "very well sorted": "well sorted",
+        "sorted fair sorted": "well sorted",
+    }
+    series = series.map(lambda k: k if k not in replacements else replacements[k])
+    return series
 
 
-def get_gamma_attribute(df):
-    raise NotImplementedError
+def get_gamma_attribute(df, name="GR"):
+    """Extract gamma rays for plugs.
+
+    All LAS files are located under 'data/Finalized'. We can't use Lasio because it only
+    supports LAS2 format, whereas the files we have available is in LAS3. We therefore
+    only use the .txt files and parse the necessary columns (+ some more..) ourselves.
+
+    The method can probably be made faster, but it works. :-)
+    """
+    p = pathlib.Path("data/Finalized")
+    gamma_rays = pd.Series(index=df.index.values, name=name)
+    for (well_name, depth), g in df.groupby(["Well Name", "Measured Depth"]):
+        directories = list(p.glob(f"*_{well_name}"))
+        assert len(directories) == 1, directories
+        f = next(directories[0].glob("*.txt"))
+        las = pd.read_csv(
+            f,
+            sep="\t",
+            usecols=[
+                "Depth.m",
+                "GR.API",
+                "Lithology1.-",
+                "Lithology2.-",
+                "Lithology3.-",
+            ],
+        )
+
+        idx = closest_value(las["Depth.m"], depth)
+
+        gamma_rays.loc[g.index] = las.loc[idx, "GR.API"]
+    return gamma_rays.astype(float)
 
 
 def get_porosity_attribute(df, name="porosity"):
-    return pd.Series(df["porosity best of available"], name=name)
+    return pd.Series(df["porosity best of available"], name=name).astype(float)
 
 
 def get_permeability_attribute(df, name="permeability"):
